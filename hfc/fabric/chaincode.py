@@ -177,7 +177,7 @@ class Chaincode(BaseChaincode):
 
     async def _instantiate_or_upgrade(self, operation_name, requestor, channel_name, peers, cc_version,
                                       cc_endorsement_policy=None,
-                                      fcn='init', args=None,
+                                      fcn='InitLedger', args=None,
                                       transient_map=None,
                                       collections_config=None,
                                       wait_for_event=False,
@@ -208,6 +208,8 @@ class Chaincode(BaseChaincode):
         """
         target_peers = self._client.get_target_peers(peers)
         operation = self.operation_mapping[operation_name](fcn)
+#         print(f"operation is : {operation}" )
+#         print(f"operation_name ----->> {operation_name}, fcn ---------->> {fcn}")
 
         tran_prop_req_dep = create_tx_prop_req(
             prop_type=operation.operation_type,
@@ -228,11 +230,15 @@ class Chaincode(BaseChaincode):
         )
 
         channel = self._client.get_channel(channel_name)
+#         print(f"channel: {channel}, tx_context_dep : {tx_context_dep}, target_peers: {target_peers}")
 
         responses, proposal, header = operation.send_proposal(
             tx_context_dep, target_peers, channel)
+#         
         res = await asyncio.gather(*responses)
         # if proposal was not good, return
+        for x in res:
+            print(f"x is ------------>>> {x}")
         if not all([x.response.status == SUCCESS_STATUS for x in res]):
             raise RuntimeError(res[0].response.message)
 
@@ -282,7 +288,7 @@ class Chaincode(BaseChaincode):
         return chaincode
 
     async def query(self, requestor, channel_name, peers, args,
-                    cc_type=CC_TYPE_GOLANG, fcn='query', transient_map=None):
+                    cc_type=CC_TYPE_GOLANG, fcn='GetAllAssets', transient_map=None):
         """
         Query chaincode
 
@@ -301,10 +307,12 @@ class Chaincode(BaseChaincode):
             prop_type=CC_QUERY,
             cc_name=self._name,
             cc_type=cc_type,
-            fcn=fcn,
+            fcn='GetAllAssets',
             args=args,
             transient_map=transient_map
         )
+#         print(f"fcn----->{fcn}")
+#         print(f"tran_prop_req ...........>> {tran_prop_req}")
 
         tx_context = create_tx_context(
             requestor,
@@ -314,9 +322,12 @@ class Chaincode(BaseChaincode):
 
         responses, proposal, header = self._client.get_channel(
             channel_name).send_tx_proposal(tx_context, target_peers)
+#         print(f"responses: {responses}, proposal:{proposal}, header:{header}")
         res = await asyncio.gather(*responses)
         tran_req = utils.build_tx_req((res, proposal, header))
+#         print(f"tran_req --------->>{tran_req}")
 
+#         print(f"res is ------->> {res}")
         if not all([x.response.status == SUCCESS_STATUS for x in tran_req.responses]):
             raise ChaincodeExecutionError(res)
 
@@ -468,3 +479,151 @@ class Chaincode(BaseChaincode):
 
         res = decode_proposal_response_payload(res[0].payload)
         return res['extension']['response']['payload'].decode('utf-8')
+
+
+
+    async def assetexists(self, requestor, channel_name, peers, args,
+                    cc_type=CC_TYPE_GOLANG, fcn='AssetExists', transient_map=None):
+        """
+        Query chaincode
+
+        :param requestor: User role who issue the request
+        :param channel_name: the name of the channel to send tx proposal
+        :param peers: List of  peer name and/or Peer to install
+        :param args (list): arguments (keys and values) for initialization
+        :param cc_type: chaincode type language
+        :param fcn: chaincode function
+        :param transient_map: transient map
+        :return: requested value
+        """
+        target_peers = self._client.get_target_peers(peers)
+        # print(f"args is :{args}")
+
+        tran_prop_req = create_tx_prop_req(
+            prop_type=CC_QUERY,
+            cc_name=self._name,
+            cc_type=cc_type,
+            fcn=fcn,
+            args=args,
+            transient_map=transient_map
+        )
+        #         print(f"fcn----->{fcn}")
+        #         print(f"tran_prop_req ...........>> {tran_prop_req}")
+
+        tx_context = create_tx_context(
+            requestor,
+            requestor.cryptoSuite,
+            tran_prop_req
+        )
+
+        responses, proposal, header = self._client.get_channel(
+            channel_name).send_tx_proposal(tx_context, target_peers)
+        #         print(f"responses: {responses}, proposal:{proposal}, header:{header}")
+        res = await asyncio.gather(*responses)
+        tran_req = utils.build_tx_req((res, proposal, header))
+        #         print(f"tran_req --------->>{tran_req}")
+
+        # print(f"res is ------->> {res},status is : {res[0].response.status}")
+        if not all([x.response.status == SUCCESS_STATUS for x in tran_req.responses]):
+            raise ChaincodeExecutionError(res)
+
+        return res[0].response.payload.decode('utf-8')
+
+
+    async def assetdelete(self, requestor, channel_name, peers, args,
+                    cc_type=CC_TYPE_GOLANG, fcn='DeleteAsset', transient_map=None):
+        """
+        Query chaincode
+
+        :param requestor: User role who issue the request
+        :param channel_name: the name of the channel to send tx proposal
+        :param peers: List of  peer name and/or Peer to install
+        :param args (list): arguments (keys and values) for initialization
+        :param cc_type: chaincode type language
+        :param fcn: chaincode function
+        :param transient_map: transient map
+        :return: requested value
+        """
+        print(f"Deleting asset {args[0]}...")
+        target_peers = self._client.get_target_peers(peers)
+        # print(f"args is :{args}")
+
+        tran_prop_req = create_tx_prop_req(
+            prop_type=CC_QUERY,
+            cc_name=self._name,
+            cc_type=cc_type,
+            fcn=fcn,
+            args=args,
+            transient_map=transient_map
+        )
+        #         print(f"fcn----->{fcn}")
+        #         print(f"tran_prop_req ...........>> {tran_prop_req}")
+
+        tx_context = create_tx_context(
+            requestor,
+            requestor.cryptoSuite,
+            tran_prop_req
+        )
+
+        responses, proposal, header = self._client.get_channel(
+            channel_name).send_tx_proposal(tx_context, target_peers)
+        #         print(f"responses: {responses}, proposal:{proposal}, header:{header}")
+        res = await asyncio.gather(*responses)
+        tran_req = utils.build_tx_req((res, proposal, header))
+        #         print(f"tran_req --------->>{tran_req}")
+
+        print(f"res is ------->> {res},status is : {res[0].response.status}")
+        if not all([x.response.status == SUCCESS_STATUS for x in tran_req.responses]):
+            raise ChaincodeExecutionError(res)
+
+        return res[0].response.payload.decode('utf-8')
+
+    async def readasset(self, requestor, channel_name, peers, args,
+                    cc_type=CC_TYPE_GOLANG, fcn='ReadAsset', transient_map=None):
+        """
+        Query chaincode
+
+        :param requestor: User role who issue the request
+        :param channel_name: the name of the channel to send tx proposal
+        :param peers: List of  peer name and/or Peer to install
+        :param args (list): arguments (keys and values) for initialization
+        :param cc_type: chaincode type language
+        :param fcn: chaincode function
+        :param transient_map: transient map
+        :return: requested value
+        """
+        target_peers = self._client.get_target_peers(peers)
+        # print(f"args is :{args}")
+
+        tran_prop_req = create_tx_prop_req(
+            prop_type=CC_QUERY,
+            cc_name=self._name,
+            cc_type=cc_type,
+            fcn=fcn,
+            args=args,
+            transient_map=transient_map
+        )
+        #         print(f"fcn----->{fcn}")
+        #         print(f"tran_prop_req ...........>> {tran_prop_req}")
+
+        tx_context = create_tx_context(
+            requestor,
+            requestor.cryptoSuite,
+            tran_prop_req
+        )
+
+        responses, proposal, header = self._client.get_channel(
+            channel_name).send_tx_proposal(tx_context, target_peers)
+        #         print(f"responses: {responses}, proposal:{proposal}, header:{header}")
+        res = await asyncio.gather(*responses)
+        tran_req = utils.build_tx_req((res, proposal, header))
+        #         print(f"tran_req --------->>{tran_req}")
+
+
+        if not all([x.response.status == SUCCESS_STATUS for x in tran_req.responses]):
+            raise ChaincodeExecutionError(res)
+
+        return res[0].response.payload.decode('utf-8')
+
+
+

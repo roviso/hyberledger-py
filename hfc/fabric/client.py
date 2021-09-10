@@ -1313,7 +1313,7 @@ class Client(object):
     # this method is here only for backwards compatibility
     async def chaincode_query(self, requestor, channel_name, peers, args,
                               cc_name, cc_type=CC_TYPE_GOLANG,
-                              fcn='query', transient_map=None):
+                              fcn='GetAllAssets', transient_map=None):
         """
         Query chaincode
 
@@ -1331,6 +1331,73 @@ class Client(object):
         return await chaincode.query(requestor, channel_name, peers, args,
                                      cc_type=cc_type,
                                      fcn=fcn, transient_map=transient_map)
+
+
+    async def chaincode_assetexists(self, requestor, channel_name, peers, args,
+                              cc_name, cc_type=CC_TYPE_GOLANG,
+                              fcn='AssetExists', transient_map=None):
+        """
+        Query chaincode
+
+        :param requestor: User role who issue the request
+        :param channel_name: the name of the channel to send tx proposal
+        :param peers: List of  peer name and/or Peer to install
+        :param args (list): arguments (keys and values) for initialization
+        :param cc_name: chaincode name
+        :param cc_type: chaincode type language
+        :param fcn: chaincode function
+        :param transient_map: transient map
+        :return: True or False
+        """
+        chaincode = Chaincode(self, cc_name)
+        return await chaincode.assetexists(requestor, channel_name, peers, args,
+                                     cc_type=cc_type,
+                                     fcn=fcn, transient_map=transient_map)
+
+    async def chaincode_assetdelete(self, requestor, channel_name, peers, args,
+                              cc_name, cc_type=CC_TYPE_GOLANG,
+                              fcn='DeleteAsset', transient_map=None):
+        """
+        Query chaincode
+
+        :param requestor: User role who issue the request
+        :param channel_name: the name of the channel to send tx proposal
+        :param peers: List of  peer name and/or Peer to install
+        :param args (list): arguments (keys and values) for initialization
+        :param cc_name: chaincode name
+        :param cc_type: chaincode type language
+        :param fcn: chaincode function
+        :param transient_map: transient map
+        :return: True or False
+        """
+        chaincode = Chaincode(self, cc_name)
+        return await chaincode.assetdelete(requestor, channel_name, peers, args,
+                                     cc_type=cc_type,
+                                     fcn=fcn, transient_map=transient_map)
+
+
+    async def chaincode_readasset(self, requestor, channel_name, peers, args,
+                              cc_name, cc_type=CC_TYPE_GOLANG,
+                              fcn='ReadAsset', transient_map=None):
+        """
+        Query chaincode
+
+        :param requestor: User role who issue the request
+        :param channel_name: the name of the channel to send tx proposal
+        :param peers: List of  peer name and/or Peer to install
+        :param args (list): arguments (keys and values) for initialization
+        :param cc_name: chaincode name
+        :param cc_type: chaincode type language
+        :param fcn: chaincode function
+        :param transient_map: transient map
+        :return: True or False
+        """
+        chaincode = Chaincode(self, cc_name)
+        return await chaincode.readasset(requestor, channel_name, peers, args,
+                                     cc_type=cc_type,
+                                     fcn=fcn, transient_map=transient_map)
+
+
 
     async def query_channels(self, requestor, peers, transient_map=None,
                              decode=True, cc_type=CC_TYPE_GOLANG):
@@ -1396,11 +1463,16 @@ class Client(object):
         :return: A `BlockchainInfo` or `ProposalResponse`
         """
 
+        print(f'self._channels:{self._channels}')
+
         target_peers = self.get_target_peers(peers)
 
         channel = self.get_channel(channel_name)
+        print(f"querring channel : {channel},channel_name : {channel_name}")
         tx_context = create_tx_context(requestor, requestor.cryptoSuite,
                                        TXProposalRequest())
+
+        print(f"tx_context:{tx_context}, target_peers:{target_peers}")
 
         responses, proposal, header = channel.query_info(tx_context,
                                                          target_peers)
