@@ -92,7 +92,6 @@ venv/
 ENV/
 
 #fabric binaries
-fabric-bin/
 
 # Spyder project settings
 .spyderproject
@@ -165,7 +164,7 @@ fabric.properties
 ### Eclipse template
 
 .metadata
-bin/
+
 tmp/
 *.tmp
 *.bak

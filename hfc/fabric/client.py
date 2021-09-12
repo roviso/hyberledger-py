@@ -1262,7 +1262,7 @@ class Client(object):
     # this method is here only for backwards compatibility
     async def chaincode_invoke(self, requestor, channel_name, peers, args,
                                cc_name, cc_type=CC_TYPE_GOLANG,
-                               fcn='invoke', cc_pattern=None,
+                               fcn='TransferAsset', cc_pattern=None,
                                transient_map=None,
                                wait_for_event=False,
                                wait_for_event_timeout=DEFAULT_WAIT_FOR_EVENT_TIMEOUT,
@@ -1371,7 +1371,29 @@ class Client(object):
         :return: True or False
         """
         chaincode = Chaincode(self, cc_name)
-        return await chaincode.assetdelete(requestor, channel_name, peers, args,
+        return await chaincode.invoke(requestor, channel_name, peers, args,
+                                     cc_type=cc_type,
+                                     fcn=fcn, transient_map=transient_map)
+
+
+    async def chaincode_createasset(self, requestor, channel_name, peers, args,
+                              cc_name, cc_type=CC_TYPE_GOLANG,
+                              fcn='CreateAsset', transient_map=None):
+        """
+        Query chaincode
+
+        :param requestor: User role who issue the request
+        :param channel_name: the name of the channel to send tx proposal
+        :param peers: List of  peer name and/or Peer to install
+        :param args (list): arguments (keys and values) for initialization
+        :param cc_name: chaincode name
+        :param cc_type: chaincode type language
+        :param fcn: chaincode function
+        :param transient_map: transient map
+        :return: True or False
+        """
+        chaincode = Chaincode(self, cc_name)
+        return await chaincode.createasset(requestor, channel_name, peers, args,
                                      cc_type=cc_type,
                                      fcn=fcn, transient_map=transient_map)
 
@@ -1463,16 +1485,17 @@ class Client(object):
         :return: A `BlockchainInfo` or `ProposalResponse`
         """
 
-        print(f'self._channels:{self._channels}')
+        # print(f'self._channels:{self._channels}')
+        # print(self.network_info,self._organizations,self._users,self._channels,self._peers,self._orderers,self._CAs)
 
         target_peers = self.get_target_peers(peers)
 
         channel = self.get_channel(channel_name)
-        print(f"querring channel : {channel},channel_name : {channel_name}")
+        # print(f"querring channel : {channel},channel_name : {channel_name}")
         tx_context = create_tx_context(requestor, requestor.cryptoSuite,
                                        TXProposalRequest())
 
-        print(f"tx_context:{tx_context}, target_peers:{target_peers}")
+        # print(f"tx_context:{tx_context}, target_peers:{target_peers}")
 
         responses, proposal, header = channel.query_info(tx_context,
                                                          target_peers)

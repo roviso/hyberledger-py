@@ -56,7 +56,7 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
         return err
     }
     if exists {
-        return fmt.Errorf("the asset %s already exists", id)
+        return fmt.Errorf("the asset %s already exists color: %s, size: %s , owner: %s, appraisedvalue: %s",id, color, size, owner, appraisedValue)
     }
 
     asset := Asset{
@@ -71,7 +71,12 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
         return err
     }
 
-    return ctx.GetStub().PutState(id, assetJSON)
+    err =  ctx.GetStub().PutState(id, assetJSON)
+    if err != nil {
+            return fmt.Errorf("failed to put to world state. %v", err)
+        }
+
+    return assetJSON
 }
 
 
